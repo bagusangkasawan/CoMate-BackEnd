@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
              const res = await fetch(`${API_URL}/users/current`, { headers: { 'Authorization': `Bearer ${token}` } });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
-            document.getElementById('current-user-email').textContent = data.data.email;
+            document.getElementById('current-user-username').textContent = data.data.username;
         } catch (error) { 
             console.error('Failed to fetch user', error); 
             logoutBtn.click(); 

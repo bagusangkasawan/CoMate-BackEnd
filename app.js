@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const typingIndicator = document.getElementById('typing-indicator');
 
     // --- State Management ---
-    const API_URL = 'https://vercel.com/bagusangkasawans-projects/comate-backend/api';
+    const API_URL = 'https://comate-backend.vercel.app/api';
     let token = localStorage.getItem('token');
     let chatSessionId = sessionStorage.getItem('chatSessionId');
     let chatMessages = JSON.parse(sessionStorage.getItem('chatMessages')) || [];

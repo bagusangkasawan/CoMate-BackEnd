@@ -18,35 +18,29 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatInput = document.getElementById('chat-input');
     const chatBox = document.getElementById('chat-box');
     const typingIndicator = document.getElementById('typing-indicator');
+    const sidebarLinks = document.querySelectorAll('.nav-link');
+    const views = document.querySelectorAll('.view');
+    const profileForm = document.getElementById('profile-form');
+    const profileAlert = document.getElementById('profile-alert');
 
     // --- State Management ---
     const API_URL = 'http://localhost:5000/api';
     let token = localStorage.getItem('token');
     let chatSessionId = sessionStorage.getItem('chatSessionId');
     let chatMessages = JSON.parse(sessionStorage.getItem('chatMessages')) || [];
+    let currentUserData = null;
 
-    // --- Fungsi Bantuan ---
+    // --- Fungsi Bantuan & Render ---
     const formatDateTimeLocal = (datetime) => datetime ? `${datetime}:00.000+07:00` : "";
-    const showAlert = (message, type = 'danger') => {
-        authAlert.textContent = message;
-        authAlert.className = `alert alert-${type}`;
-        authAlert.classList.remove('d-none');
-        setTimeout(() => authAlert.classList.add('d-none'), 5000);
+    const showAlert = (alertEl, message, type = 'danger') => {
+        alertEl.textContent = message;
+        alertEl.className = `alert alert-${type}`;
+        alertEl.classList.remove('d-none');
+        setTimeout(() => alertEl.classList.add('d-none'), 4000);
     };
 
-    // --- Manajemen State Chat ---
-    const saveChatState = () => {
-        sessionStorage.setItem('chatSessionId', chatSessionId);
-        sessionStorage.setItem('chatMessages', JSON.stringify(chatMessages));
-    };
-    const clearChatState = () => {
-        sessionStorage.removeItem('chatSessionId');
-        sessionStorage.removeItem('chatMessages');
-        chatMessages = [];
-        chatSessionId = null;
-    };
-
-    // --- Fungsi Render ---
+    const saveChatState = () => { sessionStorage.setItem('chatSessionId', chatSessionId); sessionStorage.setItem('chatMessages', JSON.stringify(chatMessages)); };
+    const clearChatState = () => { sessionStorage.removeItem('chatSessionId'); sessionStorage.removeItem('chatMessages'); chatMessages = []; chatSessionId = null; };
     const addChatMessage = (content, sender) => {
         const existingIndicator = chatBox.querySelector('#typing-indicator');
         const msgDiv = document.createElement('div');
@@ -59,7 +53,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatBox.querySelectorAll('.chat-message:not(#typing-indicator)').forEach(el => el.remove());
         chatMessages.forEach(msg => addChatMessage(msg.content, msg.sender));
     };
-
     const renderTodos = (todos) => {
         todoList.innerHTML = '';
         todos.forEach(item => {
@@ -85,36 +78,50 @@ document.addEventListener('DOMContentLoaded', () => {
             todoList.appendChild(todoEl);
         });
     };
-    
-    // --- Fungsi Fetch ---
+
+    // --- Fetch Data ---
     const fetchCurrentUser = async () => {
         try {
-             const res = await fetch(`${API_URL}/users/current`, { headers: { 'Authorization': `Bearer ${token}` } });
+            const res = await fetch(`${API_URL}/users/current`, { headers: { 'Authorization': `Bearer ${token}` } });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
-            document.getElementById('current-user-username').textContent = data.data.username;
-        } catch (error) { 
-            console.error('Failed to fetch user', error); 
-            logoutBtn.click(); 
+            currentUserData = data.data;
+        } catch (error) {
+            console.error('Failed to fetch user', error);
+            logoutBtn.click();
         }
     };
-
     const fetchTodos = async () => {
         try {
             const res = await fetch(`${API_URL}/todo`, { headers: { 'Authorization': `Bearer ${token}` } });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
             renderTodos(data.todo);
-        } catch (err) { 
-            console.error('Failed to fetch todos:', err); 
-        }
+        } catch (err) { console.error('Failed to fetch todos:', err); }
     };
 
-    // --- Fungsi Utama ---
+    // --- Navigasi & Tampilan ---
+    const handleNavigation = (e) => {
+        e.preventDefault();
+        const targetViewId = e.currentTarget.dataset.view;
+        sidebarLinks.forEach(link => link.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        views.forEach(view => view.classList.toggle('active', view.id === targetViewId));
+        if (targetViewId === 'profile-view') populateProfileForm();
+    };
+
     const toggleViews = () => {
         if (token) {
             authContainer.classList.add('d-none');
             appContainer.classList.remove('d-none');
+            
+            // FIX: Atur tampilan default ke "Todos" setelah login
+            sidebarLinks.forEach(link => link.classList.remove('active'));
+            document.querySelector('.nav-link[data-view="todos-view"]').classList.add('active');
+            
+            views.forEach(view => view.classList.remove('active'));
+            document.getElementById('todos-view').classList.add('active');
+
             fetchCurrentUser();
             fetchTodos();
             renderChatHistory();
@@ -125,6 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     // --- Event Listeners ---
+    sidebarLinks.forEach(link => link.addEventListener('click', handleNavigation));
     showRegisterLink.addEventListener('click', (e) => { e.preventDefault(); loginView.classList.add('d-none'); registerView.classList.remove('d-none'); });
     showLoginLink.addEventListener('click', (e) => { e.preventDefault(); registerView.classList.add('d-none'); loginView.classList.remove('d-none'); });
     
@@ -141,11 +149,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
-            showAlert('Registration successful! Please login.', 'success');
+            showAlert(authAlert, 'Registration successful! Please login.', 'success');
             registerForm.reset();
             showLoginLink.click();
         } catch (err) {
-            showAlert(err.message);
+            showAlert(authAlert, err.message);
         }
     });
 
@@ -165,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.setItem('token', token);
             toggleViews();
         } catch (err) {
-            showAlert(err.message);
+            showAlert(authAlert, err.message);
         }
     });
 
@@ -175,34 +183,32 @@ document.addEventListener('DOMContentLoaded', () => {
         clearChatState();
         toggleViews();
     });
-    
+
     todoList.addEventListener('click', async (e) => {
         const deleteButton = e.target.closest('.delete-todo');
         const calendarButton = e.target.closest('.add-to-calendar');
-
         if (deleteButton) {
             const id = deleteButton.dataset.id;
             if (confirm('Are you sure?')) {
-                 try {
-                    const res = await fetch(`${API_URL}/todo/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                try {
+                    const res = await fetch(`${API_URL}/todo/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
                     if (!res.ok) throw new Error('Failed to delete');
                     fetchTodos();
                 } catch (err) { alert(err.message); }
             }
         }
-
         if (calendarButton) {
             const id = calendarButton.dataset.id;
             calendarButton.disabled = true;
-            calendarButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Adding...`;
+            calendarButton.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Adding...';
             try {
-                const res = await fetch(`${API_URL}/todo/${id}/calendar`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await fetch(`${API_URL}/todo/${id}/calendar`, { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.message || 'Failed to add to calendar');
+                if (!res.ok) throw new Error(data.message || "Failed to add to calendar");
                 fetchTodos();
             } catch (err) {
                 alert(err.message);
-                fetchTodos(); // Refresh list to reset button state even on error
+                fetchTodos();
             }
         }
     });
@@ -215,58 +221,47 @@ document.addEventListener('DOMContentLoaded', () => {
             status: document.getElementById('todo-status').value,
             startDate: formatDateTimeLocal(document.getElementById('todo-startDate').value),
             endDate: formatDateTimeLocal(document.getElementById('todo-endDate').value),
-            location: document.getElementById('todo-location').value,
+            location: document.getElementById('todo-location').value
         };
         try {
             const res = await fetch(`${API_URL}/todo`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
                 body: JSON.stringify(todoData)
             });
             if (!res.ok) throw new Error((await res.json()).message);
             todoForm.reset();
             todoModal.hide();
             fetchTodos();
-        } catch(err) { 
-            alert('Failed to create todo: ' + err.message); 
-        }
+        } catch (o) { alert('Failed to create todo: ' + o.message); }
     });
 
-    todoModalEl.addEventListener('hidden.bs.modal', () => {
-        todoForm.reset();
-        document.getElementById('todo-id').value = '';
-    });
-    
+    todoModalEl.addEventListener('hidden.bs.modal', () => { todoForm.reset(); document.getElementById('todo-id').value = "" });
+
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const message = chatInput.value.trim();
         if (!message) return;
-
         addChatMessage(message, 'user');
         chatMessages.push({ sender: 'user', content: message });
         saveChatState();
-        
-        chatInput.value = '';
+        chatInput.value = "";
         chatInput.focus();
-
         typingIndicator.classList.remove('d-none');
         chatBox.scrollTop = chatBox.scrollHeight;
-
         try {
             const res = await fetch(`${API_URL}/chat`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
-                body: JSON.stringify({ sessionId: chatSessionId, message })
+                headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ sessionId: chatSessionId, message: message })
             });
             if (!res.ok) throw new Error('Chatbot request failed');
-            
             const data = await res.json();
             const parsedContent = marked.parse(data.output);
-            
             addChatMessage(parsedContent, 'bot');
             chatMessages.push({ sender: 'bot', content: parsedContent });
             saveChatState();
-        } catch (err) {
+        } catch (s) {
             const errorMsg = 'Error: Could not connect to the bot.';
             addChatMessage(errorMsg, 'bot');
             chatMessages.push({ sender: 'bot', content: errorMsg });
@@ -277,11 +272,41 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // --- Profile Logic ---
+    const populateProfileForm = () => {
+        if (currentUserData) {
+            document.getElementById('profile-username').value = currentUserData.username;
+            document.getElementById('profile-email').value = currentUserData.email;
+        }
+    };
+    profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newUsername = document.getElementById('profile-username').value;
+        const newPassword = document.getElementById('profile-password').value;
+        const payload = {};
+        if (newUsername !== currentUserData.username) payload.username = newUsername;
+        if (newPassword) payload.password = newPassword;
+        if (Object.keys(payload).length === 0) {
+            showAlert(profileAlert, 'No changes detected.', 'info');
+            return;
+        }
+        try {
+            const res = await fetch(`${API_URL}/users/current`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`},
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+            showAlert(profileAlert, 'Profile updated successfully!', 'success');
+            await fetchCurrentUser();
+            document.getElementById('profile-password').value = '';
+        } catch (err) {
+            showAlert(profileAlert, err.message);
+        }
+    });
+
     // --- Inisialisasi ---
-    if (!chatSessionId) {
-        chatSessionId = `session_${Date.now()}`;
-        saveChatState();
-    }
+    if (!chatSessionId) { chatSessionId = `session_${Date.now()}`; saveChatState(); }
     toggleViews();
 });
-

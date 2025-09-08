@@ -58,13 +58,12 @@ const registerUser = asyncHandler(async (req, res) => {
     }
   } catch (error) {
     res.status(400);
-    throw new Error(error.message);
+    throw new Error(error);
   }
 });
 
 const loginUser = asyncHandler(async (req, res) => {
   try {
-    // Memungkinkan login dengan username atau email
     const { login, password } = req.body;
     if (!login || !password) {
       res.status(400);
@@ -72,7 +71,7 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     const user = await User.findOne({
-       $or: [{ email: login }, { username: login }] 
+      $or: [{ email: login }, { username: login }],
     });
     
     if (!user) {
@@ -104,13 +103,14 @@ const loginUser = asyncHandler(async (req, res) => {
         .json({ message: "User Logged In Successfully!", accessToken });
     } else {
       res.status(401);
-      throw new Error("Login identifier or Password is not Valid!");
+      throw new Error("Email or Password is not Valid!");
     }
   } catch (error) {
     res.status(400);
-    throw new Error(error.message);
+    throw new Error(error);
   }
 });
+
 
 const currentUser = asyncHandler(async (req, res) => {
   try {
@@ -126,12 +126,49 @@ const currentUser = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     res.status(400);
-    throw new Error(error.message);
+    throw new Error(error);
   }
 });
+
+// FUNGSI BARU: Update User Profile
+const updateUser = asyncHandler(async (req, res) => {
+  const { username, password } = req.body;
+  
+  const user = await User.findById(req.user.id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  // Update username jika ada
+  if (username) {
+    user.username = username;
+  }
+
+  // Update password jika ada
+  if (password) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+  }
+
+  const updatedUser = await user.save();
+
+  res.status(200).json({
+    message: "User profile updated successfully!",
+    data: {
+      _id: updatedUser.id,
+      username: updatedUser.username,
+      email: updatedUser.email,
+    },
+  });
+});
+
 
 module.exports = {
   registerUser,
   loginUser,
   currentUser,
+  updateUser, // Ekspor fungsi baru
 };
+

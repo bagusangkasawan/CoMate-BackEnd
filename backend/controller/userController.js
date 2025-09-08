@@ -1,9 +1,9 @@
-// This is used as try-catch of the express async code
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+// Fungsi registerUser tetap sama
 const registerUser = asyncHandler(async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -18,7 +18,6 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new Error("User Already Registered!");
     }
 
-    // Hash Password
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await User.create({
       username,
@@ -26,31 +25,13 @@ const registerUser = asyncHandler(async (req, res) => {
       password: hashedPassword,
     });
 
-    const accessToken = jwt.sign(
-      {
-        user: {
-          username: user.username,
-          email: user.email,
-          id: user.id,
-        },
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "60m" }
-    );
-
+    const accessToken = jwt.sign({ user: { username: user.username, email: user.email, id: user.id, }, }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60m" } );
     await User.findOneAndUpdate({ email: user.email }, { token: accessToken });
 
-    // If user created Successfully
     if (user) {
       res.status(201).json({
         message: "User Registered Successfully!",
-        data: {
-          _id: user.id,
-          username: user.username,
-          email: user.email,
-          avatarPic: user.avatarPic || "",
-          accessToken: accessToken,
-        },
+        data: { _id: user.id, username: user.username, email: user.email, avatarPic: user.avatarPic || "", accessToken: accessToken, },
       });
     } else {
       res.status(400);
@@ -62,6 +43,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
+// Fungsi loginUser tetap sama
 const loginUser = asyncHandler(async (req, res) => {
   try {
     const { login, password } = req.body;
@@ -69,38 +51,15 @@ const loginUser = asyncHandler(async (req, res) => {
       res.status(400);
       throw new Error("All fields are Mandatory(login, password)");
     }
-
-    const user = await User.findOne({
-      $or: [{ email: login }, { username: login }],
-    });
-    
+    const user = await User.findOne({ $or: [{ email: login }, { username: login }], });
     if (!user) {
       res.status(400);
       throw new Error("User Not Registered!");
     }
-
-    // Compare password with Hashed Password
     if (user && (await bcrypt.compare(password, user.password))) {
-      const accessToken = jwt.sign(
-        {
-          user: {
-            username: user.username,
-            email: user.email,
-            id: user.id,
-          },
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "60m" }
-      );
-
-      await User.findOneAndUpdate(
-        { email: user.email },
-        { token: accessToken }
-      );
-
-      res
-        .status(200)
-        .json({ message: "User Logged In Successfully!", accessToken });
+      const accessToken = jwt.sign({ user: { username: user.username, email: user.email, id: user.id, }, }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60m" } );
+      await User.findOneAndUpdate( { email: user.email }, { token: accessToken } );
+      res.status(200).json({ message: "User Logged In Successfully!", accessToken });
     } else {
       res.status(401);
       throw new Error("Email or Password is not Valid!");
@@ -111,34 +70,36 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-
+// Fungsi currentUser tetap sama
 const currentUser = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
-    res.json({
-      message: "Current User Fetched Successfully!",
-      data: {
-        _id: user.id,
-        username: user.username,
-        email: user.email,
-        avatarPic: user.avatarPic || "",
-      },
-    });
+    res.json({ message: "Current User Fetched Successfully!", data: { _id: user.id, username: user.username, email: user.email, avatarPic: user.avatarPic || "", }, });
   } catch (error) {
     res.status(400);
     throw new Error(error);
   }
 });
 
-// FUNGSI BARU: Update User Profile
+// FUNGSI DIPERBARUI: Update User Profile
 const updateUser = asyncHandler(async (req, res) => {
-  const { username, password } = req.body;
+  const { username, email, password } = req.body;
   
   const user = await User.findById(req.user.id);
 
   if (!user) {
     res.status(404);
     throw new Error("User not found");
+  }
+
+  // Update email jika ada dan berbeda
+  if (email && user.email !== email) {
+      const emailExists = await User.findOne({ email });
+      if (emailExists) {
+          res.status(400);
+          throw new Error("Email already taken");
+      }
+      user.email = email;
   }
 
   // Update username jika ada
@@ -152,23 +113,25 @@ const updateUser = asyncHandler(async (req, res) => {
     user.password = hashedPassword;
   }
 
-  const updatedUser = await user.save();
-
-  res.status(200).json({
-    message: "User profile updated successfully!",
-    data: {
-      _id: updatedUser.id,
-      username: updatedUser.username,
-      email: updatedUser.email,
-    },
-  });
+  try {
+    const updatedUser = await user.save();
+    res.status(200).json({
+      message: "User profile updated successfully!",
+      data: {
+        _id: updatedUser.id,
+        username: updatedUser.username,
+        email: updatedUser.email,
+      },
+    });
+  } catch (error) {
+      res.status(400);
+      throw new Error(error.message);
+  }
 });
-
 
 module.exports = {
   registerUser,
   loginUser,
   currentUser,
-  updateUser, // Ekspor fungsi baru
+  updateUser,
 };
-

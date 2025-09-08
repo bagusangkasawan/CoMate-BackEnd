@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="icon.png">
     <title>CoMate AI</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
@@ -64,6 +65,7 @@
 
     <!-- STRUKTUR APLIKASI UTAMA DENGAN SIDEBAR -->
     <div id="app-container" class="d-none">
+        <div id="mobile-overlay"></div>
         <aside class="sidebar">
             <div class="sidebar-header">
                 <i class="bi bi-check2-square"></i>
@@ -71,6 +73,8 @@
             </div>
             <nav class="nav-menu">
                 <a href="#" class="nav-link active" data-view="todos-view"><i class="bi bi-card-checklist"></i><span>My Todos</span></a>
+                <!-- UPDATE: Menambahkan link Smart Recommendation -->
+                <a href="#" id="recommendation-link" class="nav-link disabled" data-view="recommendation-view" title="Add at least 3 todos to unlock."><i class="bi bi-lightbulb-fill"></i><span>AI Smart Recommendation</span></a>
                 <a href="#" class="nav-link" data-view="chatbot-view"><i class="bi bi-robot"></i><span>Chatbot</span></a>
                 <a href="#" class="nav-link" data-view="profile-view"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             </nav>
@@ -80,20 +84,33 @@
         </aside>
 
         <main class="main-content">
+            <header class="main-header">
+                <button class="mobile-nav-toggle"><i class="bi bi-list"></i></button>
+                <h2 id="view-title">My Todos</h2>
+            </header>
+            
             <!-- View: Todos -->
             <div id="todos-view" class="view active">
-                <header class="view-header">
-                    <h2>My Todos</h2>
-                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#todoModal"><i class="bi bi-plus-lg"></i> Add New Todo</button>
-                </header>
-                <div id="todo-list" class="list-group mt-3"></div>
+                <div class="view-controls">
+                    <button class="btn btn-primary" id="add-todo-btn"><i class="bi bi-plus-lg"></i> Add New Todo</button>
+                </div>
+                <div id="todo-list" class="list-group"></div>
+            </div>
+
+            <!-- UPDATE: Menambahkan view Smart Recommendation -->
+            <div id="recommendation-view" class="view">
+                <div class="text-center">
+                    <button id="generate-recommendation-btn" class="btn btn-primary btn-lg">
+                        <i class="bi bi-stars"></i> Generate Priority Recommendation
+                    </button>
+                </div>
+                <div id="recommendation-result" class="mt-4">
+                    <!-- Hasil rekomendasi akan ditampilkan di sini -->
+                </div>
             </div>
 
             <!-- View: Chatbot -->
             <div id="chatbot-view" class="view">
-                 <header class="view-header">
-                    <h2>Chat with Llama</h2>
-                </header>
                  <div id="chat-container">
                     <div id="chat-box" class="p-3 mb-2">
                         <div id="typing-indicator" class="chat-message bot d-none">
@@ -102,19 +119,18 @@
                     </div>
                     <form id="chat-form">
                         <div class="input-group">
-                            <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." required>
+                            <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." required maxlength="250">
                             <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i></button>
                         </div>
+                        <!-- UPDATE: Menambahkan character counter -->
+                        <div id="char-counter" class="form-text text-end mt-1">0/250</div>
                     </form>
                 </div>
             </div>
 
             <!-- View: Profile -->
             <div id="profile-view" class="view">
-                 <header class="view-header">
-                    <h2>My Profile</h2>
-                </header>
-                <div class="card mt-3">
+                <div class="card">
                     <div class="card-body">
                          <form id="profile-form">
                             <div id="profile-alert" class="alert d-none"></div>
@@ -124,8 +140,7 @@
                             </div>
                             <div class="mb-3">
                                 <label for="profile-email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="profile-email" disabled>
-                                <div class="form-text">Email cannot be changed.</div>
+                                <input type="email" class="form-control" id="profile-email" required>
                             </div>
                              <hr>
                             <p class="text-muted">Change Password</p>
@@ -183,6 +198,10 @@
                <div class="mb-3">
                 <label for="todo-location" class="form-label">Location</label>
                 <input type="text" class="form-control" id="todo-location">
+              </div>
+              <div class="mb-3">
+                <label for="todo-attendee" class="form-label">Invite Attendee (Email) <span class="text-muted">(Optional)</span></label>
+                <input type="email" class="form-control" id="todo-attendee" placeholder="attendee@example.com">
               </div>
               <button type="submit" class="btn btn-primary w-100">Save</button>
             </form>

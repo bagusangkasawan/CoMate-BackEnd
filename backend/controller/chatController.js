@@ -10,6 +10,11 @@ const chatWithBot = asyncHandler(async (req, res) => {
     throw new Error("sessionId and message are required.");
   }
 
+  if (message.length > 1024) {
+    res.status(400);
+    throw new Error("Message cannot exceed 1024 characters.");
+  }
+
   try {
     const payload = {
       sessionId,
@@ -39,4 +44,3 @@ const chatWithBot = asyncHandler(async (req, res) => {
 module.exports = {
   chatWithBot,
 };
-

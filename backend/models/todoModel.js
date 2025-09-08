@@ -7,35 +7,26 @@ const todoSchema = mongoose.Schema(
       required: true,
       ref: "User",
     },
+    email: {
+        type: String,
+        required: [true, "Please add the user's email address."],
+    },
     title: {
       type: String,
       required: [true, "Please add the todo title."],
     },
-    description: {
-      type: String,
-      required: [false],
-    },
+    description: { type: String },
     status: {
       type: String,
       required: [true, "Please select at least one status."],
       enum: ["To Do", "Pending", "Done"],
     },
-    startDate: { // Diubah dari dueDate
-      type: String,
-      required: [false],
-    },
-    endDate: { // Diubah dari reminderDate
-      type: String,
-      required: [false],
-    },
-    location: { // Bidang baru
-      type: String,
-      required: false,
-    },
-    googleCalendarUrl: { // Bidang baru untuk link Google Calendar
-      type: String,
-      required: [false],
-    },
+    startDate: { type: String },
+    endDate: { type: String },
+    location: { type: String },
+    attendee: { type: String }, // Bidang baru untuk attendee
+    googleCalendarUrl: { type: String },
+    googleCalendarId: { type: String },
   },
   {
     timestamps: true,

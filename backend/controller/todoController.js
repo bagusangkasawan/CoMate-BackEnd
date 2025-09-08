@@ -2,7 +2,9 @@ const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const Todo = require("../models/todoModel");
-const axios = require("axios");
+const axios = require('axios');
+
+const n8nTodosUrl = process.env.N8N_WEBHOOK_TODOS;
 
 const getTodos = asyncHandler(async (req, res) => {
   try {
@@ -10,51 +12,32 @@ const getTodos = asyncHandler(async (req, res) => {
     res.status(200).json({ message: "Get All Todo", todo });
   } catch (error) {
     res.status(400);
-    throw new Error(error.message);
+    throw new Error(error);
   }
 });
 
 const createTodo = asyncHandler(async (req, res) => {
   try {
-    const {
-      title,
-      status,
-      description = "",
-      startDate = "",
-      endDate = "",
-      location = "",
-    } = req.body;
-
+    const { title, status, description, startDate, endDate, location, attendee } = req.body;
     if (!title || !status) {
       res.status(400);
-      throw new Error("Fields 'title' and 'status' are mandatory.");
+      throw new Error("All fields are Mandatory(title, status)");
     }
-
-    // Hapus logika kalender otomatis dari sini
     const todo = await Todo.create({
       user_id: req.user.id,
-      title,
-      description,
-      status,
-      startDate,
-      endDate,
-      location,
+      email: req.user.email,
+      title, description, status, startDate, endDate, location, attendee,
     });
-
     res.status(201).json({ message: "Todo created successfully", todo });
   } catch (error) {
     res.status(400);
-    throw new Error(error.message);
+    throw new Error(error);
   }
 });
 
 const getTodo = asyncHandler(async (req, res) => {
   try {
-    const todo = await Todo.findOne({
-      _id: new ObjectId(req.params.id),
-      user_id: req.user.id,
-    });
-
+    const todo = await Todo.findOne({ _id: new ObjectId(req.params.id), user_id: req.user.id, });
     if (!todo) {
       res.status(404);
       throw new Error("Todo Not Found!");
@@ -63,118 +46,102 @@ const getTodo = asyncHandler(async (req, res) => {
     }
   } catch (error) {
     res.status(400);
-    throw new Error(error.message);
+    throw new Error(error);
   }
 });
 
 const updateTodo = asyncHandler(async (req, res) => {
-  try {
-    const todo = await Todo.findOne({
-      _id: new ObjectId(req.params.id),
-      user_id: req.user.id,
-    });
-
+    const todo = await Todo.findOne({ _id: new ObjectId(req.params.id), user_id: req.user.id });
     if (!todo) {
-      res.status(404);
-      throw new Error("Todo Not Found!");
+        res.status(404);
+        throw new Error("Todo Not Found!");
+    }
+    
+    if (todo.googleCalendarId && (req.body.startDate !== todo.startDate || req.body.endDate !== todo.endDate)) {
+        res.status(400);
+        throw new Error("Start date and end date cannot be changed for events already in the calendar.");
     }
 
-    const {
-      title,
-      status,
-      description = "",
-      startDate = "",
-      endDate = "",
-      location = ""
-    } = req.body;
+    const updatedTodo = await Todo.findByIdAndUpdate(req.params.id, req.body, { new: true });
 
-    const updatedTodo = await Todo.findByIdAndUpdate(
-      req.params.id,
-      {
-        title,
-        description,
-        status,
-        startDate,
-        endDate,
-        location
-      },
-      {
-        new: true,
-      }
-    );
+    if (updatedTodo.googleCalendarId) {
+        try {
+            const calendarUpdateUrl = `${n8nTodosUrl}-update`;
+            const payload = {
+                id: updatedTodo.googleCalendarId,
+                title: updatedTodo.title,
+                description: updatedTodo.description || '',
+                location: updatedTodo.location || '',
+                attendee: updatedTodo.attendee || '', // Kirim attendee saat update
+            };
+            await axios.post(calendarUpdateUrl, payload);
+        } catch (error) {
+            console.error("Failed to update Google Calendar event:", error.message);
+        }
+    }
 
-    res
-      .status(200)
-      .json({ message: `Update Todo for ${req.params.id}`, updatedTodo });
-  } catch (error) {
-    res.status(400);
-    throw new Error(error.message);
-  }
+    res.status(200).json({ message: `Update Todo for ${req.params.id}`, updatedTodo });
 });
 
 const deleteTodo = asyncHandler(async (req, res) => {
-  try {
-    const todo = await Todo.findOne({
-      _id: new ObjectId(req.params.id),
-      user_id: req.user.id,
-    });
-
+    const todo = await Todo.findOne({ _id: new ObjectId(req.params.id), user_id: req.user.id });
     if (!todo) {
-      res.status(404);
-      throw new Error("Todo Not Found!");
+        res.status(404);
+        throw new Error("Todo Not Found!");
+    }
+
+    if (todo.googleCalendarId) {
+        try {
+            const calendarDeleteUrl = `${n8nTodosUrl}-delete`;
+            await axios.post(calendarDeleteUrl, { id: todo.googleCalendarId });
+        } catch (error) {
+            console.error("Failed to delete Google Calendar event:", error.message);
+        }
     }
 
     await Todo.deleteOne({ _id: new ObjectId(req.params.id) });
     res.status(200).json({ message: `Delete Todo for ${req.params.id}`, todo });
-  } catch (error) {
-    res.status(400);
-    throw new Error(error.message);
-  }
 });
 
 
-// Fungsi baru untuk integrasi kalender manual
-const addTodoToCalendar = asyncHandler(async (req, res) => {
-    const todo = await Todo.findOne({
-        _id: new ObjectId(req.params.id),
-        user_id: req.user.id,
-    });
-
+const addTodoToCalendar = asyncHandler(async(req, res) => {
+    const todo = await Todo.findOne({ _id: new ObjectId(req.params.id), user_id: req.user.id });
     if (!todo) {
         res.status(404);
-        throw new Error("Todo not found");
+        throw new Error("Todo Not Found!");
     }
-
     if (!todo.startDate || !todo.endDate || !todo.title) {
         res.status(400);
-        throw new Error("Todo must have a title, start date, and end date to be added to the calendar.");
+        throw new Error("Todo must have a start date, end date, and title to be added to the calendar.");
     }
     
     try {
-        const calendarPayload = {
+        const calendarWebhookUrl = n8nTodosUrl;
+        const payload = {
             startDate: todo.startDate,
             endDate: todo.endDate,
             title: todo.title,
-            description: todo.description || `Todo item: ${todo.title}`,
-            location: todo.location || "",
+            description: todo.description || '',
+            location: todo.location || '',
             user: req.user.email,
+            attendee: todo.attendee || '', // Kirim attendee saat create event
         };
         
-        const n8nWebhookTodos = process.env.N8N_WEBHOOK_TODOS;
+        const response = await axios.post(calendarWebhookUrl, payload);
+        const calendarData = response.data;
 
-        const calendarApiResponse = await axios.post(n8nWebhookTodos, calendarPayload);
-
-        if (calendarApiResponse.data && calendarApiResponse.data[0] && calendarApiResponse.data[0].htmlLink) {
-            todo.googleCalendarUrl = calendarApiResponse.data[0].htmlLink;
-            const updatedTodo = await todo.save();
-            res.status(200).json({ message: "Successfully added to calendar", todo: updatedTodo });
+        if (calendarData && calendarData[0] && calendarData[0].htmlLink && calendarData[0].id) {
+            todo.googleCalendarUrl = calendarData[0].htmlLink;
+            todo.googleCalendarId = calendarData[0].id;
+            await todo.save();
+            res.status(200).json({ message: "Successfully added to Google Calendar", todo });
         } else {
-            throw new Error("Invalid response from calendar service.");
+            throw new Error("Invalid response from calendar service. Missing htmlLink or id.");
         }
-    } catch (calendarError) {
-        console.error("Failed to create Google Calendar event:", calendarError.message);
+    } catch(error) {
+        console.error("Error adding to calendar:", error.message);
         res.status(500);
-        throw new Error("Failed to add event to Google Calendar.");
+        throw new Error("Could not add to Google Calendar. " + (error.response?.data?.message || error.message));
     }
 });
 
@@ -184,6 +151,5 @@ module.exports = {
   getTodos,
   updateTodo,
   deleteTodo,
-  addTodoToCalendar, // Ekspor fungsi baru
+  addTodoToCalendar
 };
-

@@ -244,6 +244,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        // UPDATE: Menambahkan loading state
+        const registerButton = registerForm.querySelector('button[type="submit"]');
+        const originalButtonHTML = registerButton.innerHTML;
+        registerButton.disabled = true;
+        registerButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Registering...`;
+
         try {
             const res = await fetch(`${API_URL}/users/register`, {
                 method: 'POST',
@@ -255,11 +261,23 @@ document.addEventListener('DOMContentLoaded', () => {
             showAlert(authAlert, 'Registration successful! Please login.', 'success');
             registerForm.reset();
             showLoginLink.click();
-        } catch (err) { showAlert(authAlert, err.message); }
+        } catch (err) { 
+            showAlert(authAlert, err.message); 
+        } finally {
+            // UPDATE: Mengembalikan state tombol
+            registerButton.disabled = false;
+            registerButton.innerHTML = originalButtonHTML;
+        }
     });
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+        // UPDATE: Menambahkan loading state
+        const loginButton = loginForm.querySelector('button[type="submit"]');
+        const originalButtonHTML = loginButton.innerHTML;
+        loginButton.disabled = true;
+        loginButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Logging In...`;
+
         try {
             const res = await fetch(`${API_URL}/users/login`, {
                 method: 'POST',
@@ -271,22 +289,39 @@ document.addEventListener('DOMContentLoaded', () => {
             token = data.accessToken;
             localStorage.setItem('token', token);
             toggleViews();
-        } catch (err) { showAlert(authAlert, err.message); }
+        } catch (err) { 
+            showAlert(authAlert, err.message); 
+        } finally {
+            // UPDATE: Mengembalikan state tombol
+            loginButton.disabled = false;
+            loginButton.innerHTML = originalButtonHTML;
+        }
     });
 
     logoutBtn.addEventListener('click', () => { 
-        token = null; 
-        localStorage.removeItem('token'); 
-        sessionStorage.removeItem('chatSessionId');
-        sessionStorage.removeItem('chatMessages');
-        sessionStorage.removeItem('cachedRecommendation');
-        chatMessages = []; 
-        cachedRecommendation = null;
-        chatMessages.push({
-            sender: 'bot',
-            content: marked.parse("Halo, saya **CoMate AI** yang didukung oleh Llama. Ada yang bisa saya bantu?")
-        });
-        toggleViews(); 
+        // UPDATE: Menambahkan loading state
+        logoutBtn.disabled = true;
+        logoutBtn.innerHTML = `<i class="bi bi-box-arrow-left"></i><span><span class="spinner-border spinner-border-sm"></span> Logging out...</span>`;
+
+        // Memberi sedikit jeda agar spinner terlihat
+        setTimeout(() => {
+            token = null; 
+            localStorage.removeItem('token'); 
+            sessionStorage.removeItem('chatSessionId');
+            sessionStorage.removeItem('chatMessages');
+            sessionStorage.removeItem('cachedRecommendation');
+            chatMessages = []; 
+            cachedRecommendation = null;
+            chatMessages.push({
+                sender: 'bot',
+                content: marked.parse("Halo, saya **CoMate AI** yang didukung oleh Llama. Ada yang bisa saya bantu?")
+            });
+            toggleViews();
+            
+            // Mengembalikan state tombol logout setelah selesai (meskipun tidak akan terlihat karena halaman di-reload)
+            logoutBtn.disabled = false;
+            logoutBtn.innerHTML = `<i class="bi bi-box-arrow-left"></i><span>Logout</span>`;
+        }, 300);
     });
 
     todoList.addEventListener('click', async (e) => {
@@ -297,21 +332,18 @@ document.addEventListener('DOMContentLoaded', () => {
         if (deleteButton) {
             const id = deleteButton.dataset.id;
             if (confirm('Are you sure you want to delete this todo?')) {
-                // UPDATE: Menambahkan loading state saat delete
                 const todoItemActions = deleteButton.closest('.todo-item-actions');
-                const originalButtons = todoItemActions.innerHTML;
+                const originalButtonsHTML = todoItemActions.innerHTML; // Simpan semua tombol
                 todoItemActions.querySelectorAll('.action-btn').forEach(btn => btn.disabled = true);
                 deleteButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Deleting...`;
                 
                 try {
                     const res = await fetch(`${API_URL}/todo/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
                     if (!res.ok) throw new Error('Failed to delete');
-                    // fetchTodos akan merender ulang list, jadi tidak perlu restore button secara manual
                     fetchTodos();
                 } catch (err) {
                     alert(err.message);
-                    // Jika gagal, kembalikan tombol ke keadaan semula
-                    todoItemActions.innerHTML = originalButtons;
+                    todoItemActions.innerHTML = originalButtonsHTML; // Kembalikan semua tombol jika gagal
                 }
             }
         }
@@ -490,15 +522,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const newUsername = profileForm.elements['profile-username'].value;
-        const newEmail = profileForm.elements['profile-email'].value;
-        const newPassword = profileForm.elements['profile-password'].value;
-        const payload = {};
-        if (newUsername !== currentUserData.username) payload.username = newUsername;
-        if (newEmail !== currentUserData.email) payload.email = newEmail;
-        if (newPassword) payload.password = newPassword;
-        if (Object.keys(payload).length === 0) { showAlert(profileAlert, 'No changes detected.', 'info'); return; }
+        // UPDATE: Menambahkan loading state
+        const updateButton = profileForm.querySelector('button[type="submit"]');
+        const originalButtonHTML = updateButton.innerHTML;
+        updateButton.disabled = true;
+        updateButton.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Updating...`;
+
         try {
+            const newUsername = profileForm.elements['profile-username'].value;
+            const newEmail = profileForm.elements['profile-email'].value;
+            const newPassword = profileForm.elements['profile-password'].value;
+            const payload = {};
+            if (newUsername !== currentUserData.username) payload.username = newUsername;
+            if (newEmail !== currentUserData.email) payload.email = newEmail;
+            if (newPassword) payload.password = newPassword;
+            if (Object.keys(payload).length === 0) {
+                showAlert(profileAlert, 'No changes detected.', 'info');
+                return;
+            }
             const res = await fetch(`${API_URL}/users/current`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`}, body: JSON.stringify(payload) });
             const data = await res.json();
             if (!res.ok) throw new Error(data.message);
@@ -506,7 +547,13 @@ document.addEventListener('DOMContentLoaded', () => {
             await fetchCurrentUser();
             populateProfileForm(); 
             profileForm.elements['profile-password'].value = '';
-        } catch (err) { showAlert(profileAlert, err.message); }
+        } catch (err) { 
+            showAlert(profileAlert, err.message); 
+        } finally {
+            // UPDATE: Mengembalikan state tombol
+            updateButton.disabled = false;
+            updateButton.innerHTML = originalButtonHTML;
+        }
     });
 
     if (!chatSessionId) { chatSessionId = `session_${Date.now()}`; saveChatState(); }

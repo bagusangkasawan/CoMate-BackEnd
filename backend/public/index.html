@@ -73,8 +73,7 @@
             </div>
             <nav class="nav-menu">
                 <a href="#" class="nav-link active" data-view="todos-view"><i class="bi bi-card-checklist"></i><span>My Todos</span></a>
-                <!-- UPDATE: Menambahkan link Smart Recommendation -->
-                <a href="#" id="recommendation-link" class="nav-link disabled" data-view="recommendation-view" title="Add at least 3 todos to unlock."><i class="bi bi-lightbulb-fill"></i><span>AI Smart Recommendation</span></a>
+                <a href="#" id="recommendation-link" class="nav-link" data-view="recommendation-view"><i class="bi bi-lightbulb-fill"></i><span>AI Smart Recommendation</span><i class="bi bi-lock-fill premium-lock-icon"></i></a>
                 <a href="#" class="nav-link" data-view="chatbot-view"><i class="bi bi-robot"></i><span>Chatbot</span></a>
                 <a href="#" class="nav-link" data-view="profile-view"><i class="bi bi-person-circle"></i><span>Profile</span></a>
             </nav>
@@ -92,12 +91,15 @@
             <!-- View: Todos -->
             <div id="todos-view" class="view active">
                 <div class="view-controls">
+                    <button class="btn btn-secondary me-2" id="add-task-btn"><i class="bi bi-collection"></i> Add New Task</button>
                     <button class="btn btn-primary" id="add-todo-btn"><i class="bi bi-plus-lg"></i> Add New Todo</button>
                 </div>
-                <div id="todo-list" class="list-group"></div>
+                <div id="todo-and-task-list">
+                    <!-- Tasks and Todos will be rendered here by app.js -->
+                </div>
             </div>
 
-            <!-- UPDATE: Menambahkan view Smart Recommendation -->
+            <!-- View: Smart Recommendation -->
             <div id="recommendation-view" class="view">
                 <div class="text-center">
                     <button id="generate-recommendation-btn" class="btn btn-primary btn-lg">
@@ -105,7 +107,11 @@
                     </button>
                 </div>
                 <div id="recommendation-result" class="mt-4">
-                    <!-- Hasil rekomendasi akan ditampilkan di sini -->
+                    <div class="recommendation-placeholder">
+                        <i class="bi bi-lightbulb"></i>
+                        <p class="h5 text-muted">Smart Recommendation from AI will be displayed here.</p>
+                        <p class="text-muted">Click the button above to generate one based on your current todos.</p>
+                    </div>
                 </div>
             </div>
 
@@ -122,7 +128,6 @@
                             <input type="text" id="chat-input" class="form-control" placeholder="Type a message..." required maxlength="250">
                             <button class="btn btn-primary" type="submit"><i class="bi bi-send"></i></button>
                         </div>
-                        <!-- UPDATE: Menambahkan character counter -->
                         <div id="char-counter" class="form-text text-end mt-1">0/250</div>
                     </form>
                 </div>
@@ -130,27 +135,42 @@
 
             <!-- View: Profile -->
             <div id="profile-view" class="view">
-                <div class="card">
-                    <div class="card-body">
-                         <form id="profile-form">
-                            <div id="profile-alert" class="alert d-none"></div>
-                            <div class="mb-3">
-                                <label for="profile-username" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="profile-username" required>
+                <div class="row">
+                    <div class="col-lg-7">
+                        <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Update Profile</h5>
+                                <form id="profile-form">
+                                    <div id="profile-alert" class="alert d-none"></div>
+                                    <div class="mb-3">
+                                        <label for="profile-username" class="form-label">Username</label>
+                                        <input type="text" class="form-control" id="profile-username" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="profile-email" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="profile-email" required>
+                                    </div>
+                                    <hr>
+                                    <p class="text-muted">Change Password</p>
+                                    <div class="mb-3">
+                                        <label for="profile-password" class="form-label">New Password</label>
+                                        <input type="password" class="form-control" id="profile-password">
+                                        <div class="form-text">Leave blank if you don't want to change it.</div>
+                                    </div>
+                                    <button type="submit" class="btn btn-success">Update Profile</button>
+                                </form>
                             </div>
-                            <div class="mb-3">
-                                <label for="profile-email" class="form-label">Email</label>
-                                <input type="email" class="form-control" id="profile-email" required>
+                        </div>
+                    </div>
+                    <div class="col-lg-5 mt-4 mt-lg-0">
+                         <div class="card">
+                            <div class="card-body">
+                                <h5 class="card-title">Subscription Status</h5>
+                                <div id="subscription-status">
+                                    <!-- Status will be rendered by app.js -->
+                                </div>
                             </div>
-                             <hr>
-                            <p class="text-muted">Change Password</p>
-                             <div class="mb-3">
-                                <label for="profile-password" class="form-label">New Password</label>
-                                <input type="password" class="form-control" id="profile-password">
-                                <div class="form-text">Leave blank if you don't want to change it.</div>
-                            </div>
-                            <button type="submit" class="btn btn-success">Update Profile</button>
-                         </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -171,6 +191,12 @@
               <div class="mb-3">
                 <label for="todo-title" class="form-label">Title <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="todo-title" required>
+              </div>
+              <div class="mb-3">
+                <label for="todo-task" class="form-label">Task (Group)</label>
+                <select class="form-select" id="todo-task">
+                    <!-- Task options will be populated by app.js -->
+                </select>
               </div>
               <div class="mb-3">
                 <label for="todo-description" class="form-label">Description <span class="text-muted">(Optional)</span></label>
@@ -208,6 +234,45 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <!-- Modal Task -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="taskModalLabel">Add New Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="task-form">
+                        <input type="hidden" id="task-id">
+                        <div class="mb-3">
+                            <label for="task-title" class="form-label">Task Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="task-title" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save Task</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Premium Lock -->
+    <div class="modal fade" id="premiumModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="bi bi-gem text-warning"></i> Premium Feature</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="premium-modal-message"></p>
+                    <p>Upgrade to Premium to unlock this feature and get unlimited todos!</p>
+                    <button class="btn btn-warning" id="go-to-profile-btn">Upgrade Now</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>

@@ -2,13 +2,15 @@ const asyncHandler = require("express-async-handler");
 const mongoose = require("mongoose");
 const ObjectId = mongoose.Types.ObjectId;
 const Todo = require("../models/todoModel");
+const Task = require("../models/taskModel");
+const User = require("../models/userModel");
 const axios = require('axios');
 
 const n8nTodosUrl = process.env.N8N_WEBHOOK_TODOS;
 
 const getTodos = asyncHandler(async (req, res) => {
   try {
-    const todo = await Todo.find({ user_id: req.user.id });
+    const todo = await Todo.find({ user_id: req.user.id }).sort({ createdAt: 'desc' });
     res.status(200).json({ message: "Get All Todo", todo });
   } catch (error) {
     res.status(400);
@@ -16,23 +18,28 @@ const getTodos = asyncHandler(async (req, res) => {
   }
 });
 
+// FUNGSI DIPERBARUI: Validasi batas To-Do untuk pengguna non-premium
 const createTodo = asyncHandler(async (req, res) => {
-  try {
-    const { title, status, description, startDate, endDate, location, attendee } = req.body;
-    if (!title || !status) {
-      res.status(400);
-      throw new Error("All fields are Mandatory(title, status)");
-    }
-    const todo = await Todo.create({
-      user_id: req.user.id,
-      email: req.user.email,
-      title, description, status, startDate, endDate, location, attendee,
-    });
-    res.status(201).json({ message: "Todo created successfully", todo });
-  } catch (error) {
-    res.status(400);
-    throw new Error(error);
+  const user = await User.findById(req.user.id);
+  const todoCount = await Todo.countDocuments({ user_id: req.user.id });
+
+  if (!user.isPremium && todoCount >= 10) {
+    res.status(403); // Forbidden
+    throw new Error("You have reached the 10 todo limit for free accounts. Please subscribe to add more.");
   }
+
+  const { title, status, description, startDate, endDate, location, attendee, taskId } = req.body;
+  if (!title || !status) {
+    res.status(400);
+    throw new Error("All fields are Mandatory(title, status)");
+  }
+  const todo = await Todo.create({
+    user_id: req.user.id,
+    email: req.user.email,
+    title, description, status, startDate, endDate, location, attendee,
+    taskId: taskId || null,
+  });
+  res.status(201).json({ message: "Todo created successfully", todo });
 });
 
 const getTodo = asyncHandler(async (req, res) => {
@@ -72,7 +79,7 @@ const updateTodo = asyncHandler(async (req, res) => {
                 title: updatedTodo.title,
                 description: updatedTodo.description || '',
                 location: updatedTodo.location || '',
-                attendee: updatedTodo.attendee || '', // Kirim attendee saat update
+                attendee: updatedTodo.attendee || '',
             };
             await axios.post(calendarUpdateUrl, payload);
         } catch (error) {
@@ -103,7 +110,6 @@ const deleteTodo = asyncHandler(async (req, res) => {
     res.status(200).json({ message: `Delete Todo for ${req.params.id}`, todo });
 });
 
-
 const addTodoToCalendar = asyncHandler(async(req, res) => {
     const todo = await Todo.findOne({ _id: new ObjectId(req.params.id), user_id: req.user.id });
     if (!todo) {
@@ -124,7 +130,7 @@ const addTodoToCalendar = asyncHandler(async(req, res) => {
             description: todo.description || '',
             location: todo.location || '',
             user: req.user.email,
-            attendee: todo.attendee || '', // Kirim attendee saat create event
+            attendee: todo.attendee || '',
         };
         
         const response = await axios.post(calendarWebhookUrl, payload);
@@ -145,11 +151,39 @@ const addTodoToCalendar = asyncHandler(async(req, res) => {
     }
 });
 
+// FITUR BARU: Memindahkan To-Do ke dalam Task atau mengeluarkannya
+const moveTodoToTask = asyncHandler(async (req, res) => {
+    const { todoId, taskId } = req.params;
+
+    const todo = await Todo.findOne({ _id: todoId, user_id: req.user.id });
+    if (!todo) {
+        res.status(404);
+        throw new Error("Todo not found.");
+    }
+
+    const newTaskId = taskId === 'none' ? null : taskId;
+
+    if (newTaskId) {
+        const taskExists = await Task.findOne({ _id: newTaskId, user_id: req.user.id });
+        if (!taskExists) {
+            res.status(404);
+            throw new Error("Target task not found.");
+        }
+    }
+
+    todo.taskId = newTaskId;
+    await todo.save();
+
+    res.status(200).json(todo);
+});
+
+
 module.exports = {
   getTodo,
   createTodo,
   getTodos,
   updateTodo,
   deleteTodo,
-  addTodoToCalendar
+  addTodoToCalendar,
+  moveTodoToTask,
 };

@@ -3,13 +3,17 @@ const {
   registerUser,
   loginUser,
   currentUser,
-  updateUser, // Impor fungsi baru
+  updateUser,
+  subscribeUser, // Impor fungsi baru
 } = require("../controller/userController");
 const validateToken = require("../middleware/validateTokenHandler");
 const router = express.Router();
 
 router.post("/register", registerUser);
 router.post("/login", loginUser);
+
+// Rute baru untuk upgrade ke premium
+router.post("/subscribe", validateToken, subscribeUser);
 
 // Gabungkan GET dan PUT untuk endpoint /current
 router
@@ -18,4 +22,3 @@ router
   .put(validateToken, updateUser);
 
 module.exports = router;
-

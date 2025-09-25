@@ -4,7 +4,6 @@
   "description": "This is node express mongodb project for my todo backend api",
   "main": "server.js",
   "scripts": {
-    "test": "jest",
     "start": "node server.js",
     "dev": "nodemon server.js"
   },

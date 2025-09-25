@@ -7,6 +7,12 @@ const todoSchema = mongoose.Schema(
       required: true,
       ref: "User",
     },
+    // FITUR BARU: Menambahkan referensi ke Task
+    taskId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Task",
+      default: null, // null berarti To-Do ini tidak masuk dalam Task manapun
+    },
     email: {
         type: String,
         required: [true, "Please add the user's email address."],

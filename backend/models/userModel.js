@@ -20,6 +20,11 @@ const userSchema = mongoose.Schema(
       type: String,
       required: [true, "Please add the user password."],
     },
+    // FITUR BARU: Menambahkan status premium
+    isPremium: {
+      type: Boolean,
+      default: false,
+    },
     token: {
       type: String,
     },

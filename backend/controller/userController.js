@@ -70,11 +70,24 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 });
 
-// Fungsi currentUser tetap sama
+// FUNGSI DIPERBARUI: Mengambil data user termasuk status premium
 const currentUser = asyncHandler(async (req, res) => {
   try {
-    const user = req.user;
-    res.json({ message: "Current User Fetched Successfully!", data: { _id: user.id, username: user.username, email: user.email, avatarPic: user.avatarPic || "", }, });
+    const user = await User.findById(req.user.id).select('-password');
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+    res.json({ 
+        message: "Current User Fetched Successfully!", 
+        data: { 
+            _id: user.id, 
+            username: user.username, 
+            email: user.email, 
+            avatarPic: user.avatarPic || "", 
+            isPremium: user.isPremium // Mengirim status premium ke frontend
+        }, 
+    });
   } catch (error) {
     res.status(400);
     throw new Error(error);
@@ -95,7 +108,7 @@ const updateUser = asyncHandler(async (req, res) => {
   // Update email jika ada dan berbeda
   if (email && user.email !== email) {
       const emailExists = await User.findOne({ email });
-      if (emailExists) {
+      if (emailExists && emailExists._id.toString() !== user._id.toString()) {
           res.status(400);
           throw new Error("Email already taken");
       }
@@ -129,9 +142,41 @@ const updateUser = asyncHandler(async (req, res) => {
   }
 });
 
+// FITUR BARU: Fungsi untuk subscribe premium menggunakan voucher
+const subscribeUser = asyncHandler(async (req, res) => {
+    const { voucher } = req.body;
+    const VOUCHER_CODE = process.env.PREMIUM_VOUCHER || "PREMIUM100";
+
+    if (!voucher || voucher.trim().toUpperCase() !== VOUCHER_CODE) {
+        res.status(400);
+        throw new Error("Invalid voucher code.");
+    }
+    
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        res.status(404);
+        throw new Error("User not found");
+    }
+
+    if (user.isPremium) {
+        res.status(400);
+        throw new Error("You are already a premium member.");
+    }
+
+    user.isPremium = true;
+    await user.save();
+
+    res.status(200).json({
+        message: "Subscription successful! You are now a premium member.",
+        data: { isPremium: user.isPremium }
+    });
+});
+
+
 module.exports = {
   registerUser,
   loginUser,
   currentUser,
   updateUser,
+  subscribeUser, // export fungsi baru
 };

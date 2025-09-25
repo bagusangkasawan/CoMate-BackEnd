@@ -91,6 +91,7 @@ body {
     border-radius: 0.5rem;
     margin-bottom: 0.5rem;
     transition: background-color 0.2s ease, color 0.2s ease;
+    justify-content: space-between;
 }
 
 .nav-link:hover, .nav-link.active {
@@ -98,21 +99,29 @@ body {
     color: #ffffff;
 }
 
-.nav-link.disabled {
-    color: #8b96a1;
-    cursor: not-allowed;
-    background-color: transparent;
-}
-.nav-link.disabled:hover {
-    color: #8b96a1;
-    background-color: transparent;
+.nav-link span, .nav-link i:first-child {
+    margin-right: auto;
 }
 
-.nav-link i {
+.nav-link i:first-child {
     font-size: 1.2rem;
     margin-right: 1rem;
     width: 20px;
     text-align: center;
+}
+
+.premium-lock-icon {
+    font-size: 0.9rem;
+    color: var(--warning-color);
+    display: none; /* Disembunyikan secara default */
+}
+
+/* Tampilkan ikon kunci jika user non-premium */
+body.non-premium .nav-link[data-view="recommendation-view"] .premium-lock-icon {
+    display: inline-block;
+}
+body.non-premium .nav-link[data-view="recommendation-view"] {
+    color: #8b96a1;
 }
 
 .sidebar-footer {
@@ -176,18 +185,49 @@ body {
     margin-bottom: 1rem;
 }
 
-.form-control:disabled, .form-control[readonly] {
-    background-color: #e9ecef;
-    opacity: 1;
-    cursor: not-allowed;
+/* --- Komponen Spesifik: Task & Todo --- */
+.task-group {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+.task-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background-color: #f8f9fa;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+.task-title {
+    font-weight: 600;
+    margin: 0;
+}
+.task-controls button {
+    margin-left: 0.5rem;
+}
+.task-body {
+    padding: 0;
+}
+.task-body .list-group-item:first-child {
+    border-top: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
 }
 
-/* --- Komponen Spesifik --- */
+.uncategorized-todos-title {
+    margin-bottom: 1rem;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
 .todo-item {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 1rem;
+    padding: 1rem 1.25rem;
     transition: background-color 0.2s ease;
     flex-wrap: nowrap;
     gap: 1rem;
@@ -200,6 +240,7 @@ body {
 }
 .todo-title {
     margin-left: 0.5rem;
+    font-weight: 500;
 }
 .todo-item-actions {
     display: flex;
@@ -224,155 +265,59 @@ body {
     text-align: center;
 }
 
-/* --- Chatbot --- */
-#chatbot-view {
-    height: 100%;
-}
-
-#chat-container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-}
-
-#chat-box {
-    flex-grow: 1;
-    overflow-y: auto;
-    background-color: var(--card-bg);
-    border-radius: 0.5rem;
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-}
-
-.chat-message {
-    padding: 0.75rem 1rem;
-    border-radius: 1rem;
-    margin-bottom: 0.5rem;
-    max-width: 80%;
-    word-wrap: break-word;
-}
-
-.chat-message.user {
-    background-color: var(--primary-color);
-    color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 0.25rem;
-}
-
-.chat-message.bot {
-    background-color: #e9ecef;
+/* --- Profile & Subscription --- */
+.premium-badge {
+    background-color: var(--warning-color);
     color: var(--dark-color);
-    align-self: flex-start;
-    border-bottom-left-radius: 0.25rem;
+    font-weight: 600;
 }
 
-.chat-message.bot p {
-    margin: 0;
-}
-
-.typing-indicator {
-    display: flex;
-    align-items: center;
-}
-
-.typing-indicator span {
-    height: 8px;
-    width: 8px;
-    background-color: #6c757d;
-    border-radius: 50%;
-    margin: 0 2px;
-    animation: bounce 1s infinite;
-}
-
-.typing-indicator span:nth-child(2) {
-    animation-delay: 0.1s;
-}
-
-.typing-indicator span:nth-child(3) {
-    animation-delay: 0.2s;
-}
-
-@keyframes bounce {
-    0%, 80%, 100% {
-        transform: scale(0);
-    }
-    40% {
-        transform: scale(1.0);
-    }
-}
+/* --- Chatbot --- */
+#chatbot-view, #chat-container { height: 100%; display: flex; flex-direction: column; }
+#chat-box { flex-grow: 1; overflow-y: auto; background-color: var(--card-bg); border-radius: 0.5rem; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
+.chat-message { padding: 0.75rem 1rem; border-radius: 1rem; margin-bottom: 0.5rem; max-width: 80%; word-wrap: break-word; }
+.chat-message.user { background-color: var(--primary-color); color: white; align-self: flex-end; border-bottom-right-radius: 0.25rem; }
+.chat-message.bot { background-color: #e9ecef; color: var(--dark-color); align-self: flex-start; border-bottom-left-radius: 0.25rem; }
+.chat-message.bot p { margin: 0; }
+.typing-indicator { display: flex; align-items: center; }
+.typing-indicator span { height: 8px; width: 8px; background-color: #6c757d; border-radius: 50%; margin: 0 2px; animation: bounce 1s infinite; }
+.typing-indicator span:nth-child(2) { animation-delay: 0.1s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.2s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
 
 /* --- Smart Recommendation --- */
-#recommendation-result {
-    background-color: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 0.5rem;
-    padding: 1.5rem;
-    flex-grow: 1; /* UPDATE: Tambahan untuk membuat spinner di tengah */
-    display: flex; /* UPDATE: Tambahan untuk membuat spinner di tengah */
-    flex-direction: column; /* UPDATE: Tambahan untuk membuat spinner di tengah */
-}
+#recommendation-result { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 0.5rem; padding: 1.5rem; flex-grow: 1; display: flex; flex-direction: column; }
+.loading-spinner-container { display: flex; justify-content: center; align-items: center; flex-grow: 1; min-height: 200px; }
 
-/* UPDATE: Styling untuk container spinner */
-.loading-spinner-container {
+.recommendation-placeholder {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    text-align: center;
     flex-grow: 1;
-    min-height: 200px;
+    padding: 2rem;
+}
+
+.recommendation-placeholder i {
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    color: #ced4da;
 }
 
 /* --- Mobile Overlay --- */
-#mobile-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 999;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-}
-
-#mobile-overlay.active {
-    opacity: 1;
-    visibility: visible;
-}
+#mobile-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 999; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out; }
+#mobile-overlay.active { opacity: 1; visibility: visible; }
 
 /* --- Media Queries --- */
 @media (max-width: 992px) {
-    .sidebar {
-        position: fixed;
-        top: 0;
-        left: 0;
-        height: 100vh;
-        z-index: 1000;
-        transform: translateX(-100%);
-    }
-
-    .sidebar.is-open {
-        transform: translateX(0);
-    }
-
-    .mobile-nav-toggle {
-        display: block;
-    }
-
-    .main-content {
-        padding: 1rem;
-    }
+    .sidebar { position: fixed; top: 0; left: 0; height: 100vh; z-index: 1000; transform: translateX(-100%); }
+    .sidebar.is-open { transform: translateX(0); }
+    .mobile-nav-toggle { display: block; }
+    .main-content { padding: 1rem; }
 }
 
 @media (max-width: 576px) {
-    .todo-item {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .todo-item-actions {
-        margin-top: 0.75rem;
-        justify-content: flex-end;
-    }
+    .todo-item { flex-direction: column; align-items: stretch; }
+    .todo-item-actions { margin-top: 0.75rem; justify-content: flex-end; }
 }

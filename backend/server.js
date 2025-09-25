@@ -20,9 +20,10 @@ app.use((req, res, next) => {
 });
 
 // Routes
+app.use("/api/tasks", require("./routes/taskRoutes")); // Rute baru untuk Tasks
 app.use("/api/todo", require("./routes/todoRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
-app.use("/api/chat", require("./routes/chatRoutes")); // Rute baru untuk chatbot
+app.use("/api/chat", require("./routes/chatRoutes")); 
 
 app.use(errorHandler);
 
@@ -30,4 +31,3 @@ const port = process.env.PORT || 5000;
 app.listen(port, () => {
   console.log(`Server is running on port : ${port}`);
 });
-

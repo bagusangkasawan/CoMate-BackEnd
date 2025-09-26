@@ -18,7 +18,6 @@ const getTodos = asyncHandler(async (req, res) => {
   }
 });
 
-// FUNGSI DIPERBARUI: Validasi batas To-Do untuk pengguna non-premium
 const createTodo = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
   const todoCount = await Todo.countDocuments({ user_id: req.user.id });
@@ -64,7 +63,7 @@ const updateTodo = asyncHandler(async (req, res) => {
         throw new Error("Todo Not Found!");
     }
     
-    if (todo.googleCalendarId && (req.body.startDate !== todo.startDate || req.body.endDate !== todo.endDate)) {
+    if (todo.googleCalendarId && (req.body.startDate || req.body.endDate)) {
         res.status(400);
         throw new Error("Start date and end date cannot be changed for events already in the calendar.");
     }
@@ -151,7 +150,6 @@ const addTodoToCalendar = asyncHandler(async(req, res) => {
     }
 });
 
-// FITUR BARU: Memindahkan To-Do ke dalam Task atau mengeluarkannya
 const moveTodoToTask = asyncHandler(async (req, res) => {
     const { todoId, taskId } = req.params;
 

@@ -254,7 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebarLinks.forEach(link => link.classList.remove('active'));
         e.currentTarget.classList.add('active');
         
-        // PERBAIKAN: Menggunakan manipulasi style langsung untuk memastikan view berpindah
         views.forEach(view => {
             view.style.display = view.id === targetViewId ? 'flex' : 'none';
         });
@@ -370,35 +369,22 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         if (editBtn) {
-            // FIX: Simply show the modal and pass the button as context.
             todoModal.show(editBtn);
         }
         if (moveLink) {
             e.preventDefault();
             const todoId = moveLink.closest('.todo-item').dataset.todoId;
-            const newTaskId = moveLink.dataset.taskId; // This will be a string ID or the string "none"
+            const newTaskId = moveLink.dataset.taskId;
 
             try {
-                // Make the API call. We don't need to use its response for the UI update.
                 await apiCall(`/todo/${todoId}/move/${newTaskId}`, 'PUT');
-
-                // --- FIX: Optimistic UI Update ---
-                // Instead of relying on the response, we directly update the local state
-                // to what we know it should be. This makes the UI update instant and reliable.
                 const index = allTodos.findIndex(t => t && t._id === todoId);
                 if (index !== -1) {
-                    // Directly mutate the taskId of the todo object in our local array.
-                    // Convert the string "none" from the data attribute to a null value for uncategorized todos.
                     allTodos[index].taskId = newTaskId === 'none' ? null : newTaskId;
                 }
-                
-                // Re-render with the corrected local state.
                 renderTasksAndTodos();
-
             } catch (err) {
                 alert(err.message);
-                // If the API call fails, the optimistic update was wrong.
-                // Fetch all data again to revert to the source of truth from the server.
                 fetchAllData();
             }
         }
@@ -449,16 +435,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     addTodoBtn.addEventListener('click', () => {
-        // FIX: Simply show the modal and pass the button as context.
         todoModal.show(addTodoBtn);
     });
     
-    // FIX: Comprehensive modal setup listener
     todoModalEl.addEventListener('show.bs.modal', (event) => {
         const button = event.relatedTarget;
         const todoId = button?.dataset.id;
 
-        // Step 1: Always populate the task dropdown first.
         const taskSelect = todoForm.elements['todo-task'];
         taskSelect.innerHTML = '<option value="none">-- No Task --</option>';
         allTasks.forEach(task => {
@@ -467,8 +450,11 @@ document.addEventListener('DOMContentLoaded', () => {
             option.textContent = task.title;
             taskSelect.appendChild(option);
         });
+        
+        // **PERUBAHAN 1: Ambil elemen input tanggal**
+        const startDateInput = todoForm.elements['todo-startDate'];
+        const endDateInput = todoForm.elements['todo-endDate'];
 
-        // Step 2: Decide to populate for an edit or reset for an add.
         if (todoId) {
             // EDIT MODE
             todoModalLabel.textContent = 'Edit Todo';
@@ -479,15 +465,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 taskSelect.value = todoToEdit.taskId || 'none';
                 todoForm.elements['todo-description'].value = todoToEdit.description || '';
                 todoForm.elements['todo-status'].value = todoToEdit.status;
-                todoForm.elements['todo-startDate'].value = todoToEdit.startDate ? toLocalISOString(new Date(todoToEdit.startDate)) : '';
-                todoForm.elements['todo-endDate'].value = todoToEdit.endDate ? toLocalISOString(new Date(todoToEdit.endDate)) : '';
+                startDateInput.value = todoToEdit.startDate ? toLocalISOString(new Date(todoToEdit.startDate)) : '';
+                endDateInput.value = todoToEdit.endDate ? toLocalISOString(new Date(todoToEdit.endDate)) : '';
                 todoForm.elements['todo-location'].value = todoToEdit.location || '';
                 todoForm.elements['todo-attendee'].value = todoToEdit.attendee || '';
+
+                // **PERUBAHAN 2: Cek jika sudah ada di kalender, lalu disable input tanggal**
+                if (todoToEdit.googleCalendarUrl) {
+                    startDateInput.disabled = true;
+                    endDateInput.disabled = true;
+                } else {
+                    startDateInput.disabled = false;
+                    endDateInput.disabled = false;
+                }
             }
         } else {
             // ADD MODE
             if (!currentUserData.isPremium && allTodos.length >= 10) {
-                event.preventDefault(); // Stop the todo modal from showing
+                event.preventDefault(); 
                 premiumModalMessage.textContent = 'You have reached the 10 todo limit for free accounts.';
                 premiumModal.show();
                 return;
@@ -495,6 +490,9 @@ document.addEventListener('DOMContentLoaded', () => {
             todoModalLabel.textContent = 'Add New Todo';
             todoForm.reset();
             todoForm.elements['todo-id'].value = '';
+            // **PERUBAHAN 3: Pastikan input tanggal aktif saat mode "Add"**
+            startDateInput.disabled = false;
+            endDateInput.disabled = false;
         }
     });
 
@@ -520,22 +518,30 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const id = todoForm.elements['todo-id'].value;
         const taskId = todoForm.elements['todo-task'].value;
+        
+        // **PERUBAHAN 4: Cari todo original untuk mengecek status kalender**
+        const originalTodo = id ? allTodos.find(t => t._id === id) : null;
+        
         const payload = {
             title: todoForm.elements['todo-title'].value,
             description: todoForm.elements['todo-description'].value,
             status: todoForm.elements['todo-status'].value,
-            startDate: fromDateTimeLocal(todoForm.elements['todo-startDate'].value),
-            endDate: fromDateTimeLocal(todoForm.elements['todo-endDate'].value),
             location: todoForm.elements['todo-location'].value,
             attendee: todoForm.elements['todo-attendee'].value,
             taskId: taskId !== 'none' ? taskId : null,
         };
+        
+        // **PERUBAHAN 5: Hanya kirim tanggal jika todo BELUM ada di kalender**
+        if (!originalTodo || !originalTodo.googleCalendarUrl) {
+            payload.startDate = fromDateTimeLocal(todoForm.elements['todo-startDate'].value);
+            payload.endDate = fromDateTimeLocal(todoForm.elements['todo-endDate'].value);
+        }
+
         try {
             if (id) {
                 const response = await apiCall(`/todo/${id}`, 'PUT', payload);
                 const index = allTodos.findIndex(t => t._id === id);
                 if (index !== -1) {
-                    // FIX: Handle inconsistent API key ('updatedTodo' vs 'todo')
                     const savedTodo = response.updatedTodo || response.todo;
                     if (savedTodo) {
                         allTodos[index] = savedTodo;
@@ -543,7 +549,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } else {
                 const response = await apiCall('/todo', 'POST', payload);
-                // FIX: Handle possible inconsistent API key
                 const newTodo = response.todo || response.updatedTodo;
                 if (newTodo) {
                     allTodos.unshift(newTodo);
@@ -653,7 +658,24 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>`;
 
         const todosString = allTodos.map(t => `- ${t.title} (Status: ${t.status})`).join('\n');
-        const prompt = `Based on my current todo list below, please provide a priority recommendation. Analyze the tasks and suggest which ones I should focus on first. Explain your reasoning briefly. Format your response in markdown.\n\nMy Todos:\n${todosString}`;
+        if (todosString.length === 0) {
+            recommendationResult.innerHTML = `<div class="alert alert-info">Your todo list is empty. Please add some todos to get recommendations.</div>`;
+            generateRecommendationBtn.disabled = false;
+            generateRecommendationBtn.innerHTML = originalButtonHTML;
+            return;
+        }
+
+        const prompt = `
+        You are a top-tier productivity assistant. Analyze the user's todo list and provide a **priority recommendation**.
+
+        - Assign each task a priority: **High**, **Medium**, or **Low**.
+        - Suggest the optimal order to tackle them.
+        - Give a **brief reasoning** for each priority.
+        - Format your response in **Markdown**, using headings and bullet points.
+
+        User's Todos:
+        ${todosString}
+        `;
 
         try {
             const res = await apiCall('/chat', 'POST', {

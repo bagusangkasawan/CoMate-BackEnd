@@ -116,13 +116,7 @@ body {
     display: none; /* Disembunyikan secara default */
 }
 
-/* Tampilkan ikon kunci jika user non-premium */
-body.non-premium .nav-link[data-view="recommendation-view"] .premium-lock-icon {
-    display: inline-block;
-}
-body.non-premium .nav-link[data-view="recommendation-view"] {
-    color: #8b96a1;
-}
+/* Smart Recommendation (recommendation-view) kini GRATIS */
 
 .sidebar-footer {
     padding-top: 1rem;
@@ -199,7 +193,6 @@ body.non-premium .nav-link[data-view="recommendation-view"] {
     padding: 1rem 1.25rem;
     background-color: #f8f9fa;
     border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
 }
 .task-title {
     font-weight: 600;
@@ -403,6 +396,196 @@ body.non-premium .nav-link[data-view="recommendation-view"] {
     visibility: visible;
 }
 
+/* --- PERUBAHAN: Task Detail View Styles (Menggantikan Modal) --- */
+
+/* Hapus style modal */
+/* #taskDetailModal .modal-dialog { ... } */
+
+.collaboration-section {
+    background-color: #f8f9fa;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    /* PERUBAHAN: Pastikan tinggi 100% agar sejajar di layout kolom */
+    height: 100%; 
+}
+
+.member-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding-left: 0;
+    margin-bottom: 1rem;
+}
+
+.member-item {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+}
+
+.member-name {
+    font-size: 0.8rem;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.comment-list {
+    /* PERUBAHAN: Perbesar max-height untuk view penuh */
+    max-height: 450px; 
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: var(--card-bg);
+}
+
+.comment-item {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.comment-item:last-child {
+    margin-bottom: 0;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.comment-content {
+    flex-grow: 1;
+    /* Tambahkan position relative */
+    position: relative; 
+}
+
+.comment-header {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.comment-header .comment-date {
+    font-weight: 400;
+    color: var(--secondary-color);
+    font-size: 0.8rem;
+    margin-left: 0.5rem;
+}
+
+/* CSS BARU */
+.comment-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none; /* Sembunyi by default */
+}
+
+/* Tampilkan actions HANYA jika user adalah pemilik */
+.comment-item.is-owner .comment-actions {
+    display: block;
+}
+
+.comment-actions .btn {
+    padding: 0.1rem 0.4rem;
+    font-size: 0.8rem;
+    line-height: 1.2;
+}
+
+.comment-body {
+    font-size: 0.95rem;
+    margin: 0.25rem 0 0 0;
+    word-wrap: break-word;
+}
+
+/* CSS BARU */
+.comment-edit-form {
+    display: none; /* Sembunyi by default */
+}
+
+.comment-edit-form textarea {
+    font-size: 0.95rem;
+}
+
+/* Saat mode edit, sembunyikan body */
+.comment-item.is-editing .comment-body,
+.comment-item.is-editing .comment-actions {
+    display: none;
+}
+
+/* Saat mode edit, tampilkan form */
+.comment-item.is-editing .comment-edit-form {
+    display: block;
+}
+
+
+.premium-feature-overlay-wrapper {
+    position: relative;
+}
+
+.premium-feature-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(248, 249, 250, 0.8);
+    backdrop-filter: blur(2px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    border-radius: 0.5rem;
+    z-index: 10;
+}
+
+.premium-feature-overlay i {
+    font-size: 1.5rem;
+    color: var(--warning-color);
+}
+
+.premium-feature-overlay span {
+    font-weight: 600;
+    color: var(--dark-color);
+    font-size: 0.9rem;
+}
+
+.premium-feature-overlay .btn-warning {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+    margin-top: 0.5rem;
+}
+
+
 /* --- Media Queries --- */
 @media (max-width: 992px) {
     .sidebar {
@@ -422,7 +605,19 @@ body.non-premium .nav-link[data-view="recommendation-view"] {
     .main-content {
         padding: 1rem;
     }
+    /* PERUBAHAN: Pastikan kolom di task detail view ditumpuk di mobile */
+    #task-detail-view .col-lg-5 {
+        margin-top: 1.5rem; 
+    }
 }
+
+@media (min-width: 992px) {
+    /* PERUBAHAN: Hapus margin-top di desktop */
+    #task-detail-view .col-lg-5 {
+        margin-top: 0;
+    }
+}
+
 
 @media (max-width: 576px) {
     .todo-item {

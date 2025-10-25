@@ -7,7 +7,7 @@ const {
   deleteTodo,
   addTodoToCalendar,
   moveTodoToTask, // Impor fungsi baru
-} = require("../controller/todoController");
+} = require("../controllers/todoController");
 const validateToken = require("../middleware/validateTokenHandler");
 const router = express.Router();
 

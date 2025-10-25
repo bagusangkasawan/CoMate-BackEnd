@@ -32,6 +32,16 @@ const createTodo = asyncHandler(async (req, res) => {
     res.status(400);
     throw new Error("All fields are Mandatory(title, status)");
   }
+  
+  // Jika taskId diberikan, pastikan user adalah member dari task tsb
+  if (taskId) {
+      const taskExists = await Task.findOne({ _id: taskId, members: req.user.id });
+      if (!taskExists) {
+          res.status(403);
+          throw new Error("You are not a member of the selected task.");
+      }
+  }
+
   const todo = await Todo.create({
     user_id: req.user.id,
     email: req.user.email,
@@ -63,6 +73,16 @@ const updateTodo = asyncHandler(async (req, res) => {
         throw new Error("Todo Not Found!");
     }
     
+    // Cek jika task diubah
+    const newTaskId = req.body.taskId;
+    if (newTaskId && newTaskId !== todo.taskId?.toString()) {
+        const taskExists = await Task.findOne({ _id: newTaskId, members: req.user.id });
+        if (!taskExists) {
+            res.status(403);
+            throw new Error("You are not a member of the target task.");
+        }
+    }
+
     if (todo.googleCalendarId && (req.body.startDate || req.body.endDate)) {
         res.status(400);
         throw new Error("Start date and end date cannot be changed for events already in the calendar.");
@@ -162,10 +182,11 @@ const moveTodoToTask = asyncHandler(async (req, res) => {
     const newTaskId = taskId === 'none' ? null : taskId;
 
     if (newTaskId) {
-        const taskExists = await Task.findOne({ _id: newTaskId, user_id: req.user.id });
+        // Diperbarui: Cek apakah user adalah 'member'
+        const taskExists = await Task.findOne({ _id: newTaskId, members: req.user.id });
         if (!taskExists) {
             res.status(404);
-            throw new Error("Target task not found.");
+            throw new Error("Target task not found or you are not a member.");
         }
     }
 

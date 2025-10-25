@@ -44,6 +44,7 @@ app.use("/api/tasks", require("./routes/taskRoutes"));
 app.use("/api/todo", require("./routes/todoRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/chat", require("./routes/chatRoutes")); 
+app.use("/api/comments", require("./routes/commentRoutes")); // Rute baru untuk komentar
 
 app.use(errorHandler);
 

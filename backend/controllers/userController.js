@@ -25,7 +25,8 @@ const registerUser = asyncHandler(async (req, res) => {
       password: hashedPassword,
     });
 
-    const accessToken = jwt.sign({ user: { username: user.username, email: user.email, id: user.id, }, }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60m" } );
+    // PERUBAHAN: Menambahkan isPremium ke token JWT
+    const accessToken = jwt.sign({ user: { username: user.username, email: user.email, id: user.id, isPremium: user.isPremium }, }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60m" } );
     await User.findOneAndUpdate({ email: user.email }, { token: accessToken });
 
     if (user) {
@@ -57,7 +58,8 @@ const loginUser = asyncHandler(async (req, res) => {
       throw new Error("User Not Registered!");
     }
     if (user && (await bcrypt.compare(password, user.password))) {
-      const accessToken = jwt.sign({ user: { username: user.username, email: user.email, id: user.id, }, }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60m" } );
+      // PERUBAHAN: Menambahkan isPremium ke token JWT
+      const accessToken = jwt.sign({ user: { username: user.username, email: user.email, id: user.id, isPremium: user.isPremium }, }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: "60m" } );
       await User.findOneAndUpdate( { email: user.email }, { token: accessToken } );
       res.status(200).json({ message: "User Logged In Successfully!", accessToken });
     } else {
@@ -73,19 +75,15 @@ const loginUser = asyncHandler(async (req, res) => {
 // FUNGSI DIPERBARUI: Mengambil data user termasuk status premium
 const currentUser = asyncHandler(async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('-password');
-    if (!user) {
-        res.status(404);
-        throw new Error("User not found");
-    }
+    // req.user sekarang berasal dari token (validateTokenHandler)
+    // dan sudah berisi isPremium
     res.json({ 
         message: "Current User Fetched Successfully!", 
         data: { 
-            _id: user.id, 
-            username: user.username, 
-            email: user.email, 
-            avatarPic: user.avatarPic || "", 
-            isPremium: user.isPremium // Mengirim status premium ke frontend
+            _id: req.user.id, 
+            username: req.user.username, 
+            email: req.user.email, 
+            isPremium: req.user.isPremium // Mengirim status premium ke frontend
         }, 
     });
   } catch (error) {
@@ -134,6 +132,7 @@ const updateUser = asyncHandler(async (req, res) => {
         _id: updatedUser.id,
         username: updatedUser.username,
         email: updatedUser.email,
+        isPremium: updatedUser.isPremium, // Kirim status terbaru
       },
     });
   } catch (error) {

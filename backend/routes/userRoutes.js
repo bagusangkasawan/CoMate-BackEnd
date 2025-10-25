@@ -5,7 +5,7 @@ const {
   currentUser,
   updateUser,
   subscribeUser, // Impor fungsi baru
-} = require("../controller/userController");
+} = require("../controllers/userController");
 const validateToken = require("../middleware/validateTokenHandler");
 const router = express.Router();
 

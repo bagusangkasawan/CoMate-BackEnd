@@ -1,5 +1,5 @@
 const express = require("express");
-const { chatWithBot } = require("../controller/chatController");
+const { chatWithBot } = require("../controllers/chatController");
 const validateToken = require("../middleware/validateTokenHandler");
 const router = express.Router();
 

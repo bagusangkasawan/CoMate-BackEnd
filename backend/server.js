@@ -16,7 +16,7 @@ app.use(
       directives: {
         "default-src": ["'self'"],
         "script-src": ["'self'", "https://cdn.jsdelivr.net"], 
-        "style-src": ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"], 
+        "style-src": ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"], 
         "img-src": ["'self'", "data:", "https://images.unsplash.com"], 
         "font-src": ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"], 
         "connect-src": ["'self'", "https://cdn.jsdelivr.net"], 
@@ -44,7 +44,7 @@ app.use("/api/tasks", require("./routes/taskRoutes"));
 app.use("/api/todo", require("./routes/todoRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/chat", require("./routes/chatRoutes")); 
-app.use("/api/comments", require("./routes/commentRoutes")); // Rute baru untuk komentar
+app.use("/api/comments", require("./routes/commentRoutes"));
 
 app.use(errorHandler);
 

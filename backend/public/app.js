@@ -134,7 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <input type="text" id="voucher-input" class="form-control" placeholder="Enter Voucher Code" required>
                             <button class="btn btn-warning" type="submit">Subscribe</button>
                         </div>
-                         <div id="subscribe-alert" class="d-none mt-2"></div>
+                        <div id="subscribe-alert" class="d-none mt-2"></div>
                     </form>
                 </div>`;
             document.body.classList.add('non-premium');
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (allTodos.length === 0 && allTasks.length === 0) {
-             todoAndTaskList.innerHTML = `<div class="text-center p-5 text-muted">No tasks or todos yet. Add one to get started!</div>`;
+            todoAndTaskList.innerHTML = `<div class="text-center p-5 text-muted">No tasks or todos yet. Add one to get started!</div>`;
         }
     };
     
@@ -218,11 +218,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="todo-item-actions">
                     ${calendarButton}
                     <div class="dropdown">
-                      <button class="btn btn-sm btn-outline-secondary action-btn" type="button" data-bs-toggle="dropdown" data-bs-strategy="fixed" title="Move Todo"><i class="bi bi-folder-symlink"></i></button>
-                      <ul class="dropdown-menu">
-                        ${moveOptions || '<li><a class="dropdown-item disabled" href="#">No other tasks</a></li>'}
-                        ${uncategorizeOption}
-                      </ul>
+                        <button class="btn btn-sm btn-outline-secondary action-btn" type="button" data-bs-toggle="dropdown" data-bs-strategy="fixed" title="Move Todo"><i class="bi bi-folder-symlink"></i></button>
+                        <ul class="dropdown-menu">
+                            ${moveOptions || '<li><a class="dropdown-item disabled" href="#">No other tasks</a></li>'}
+                            ${uncategorizeOption}
+                        </ul>
                     </div>
                     <button class="btn btn-sm btn-outline-secondary edit-todo action-btn" data-id="${item._id}" title="Edit Todo"><i class="bi bi-pencil"></i></button>
                     <button class="btn btn-sm btn-outline-danger delete-todo action-btn" data-id="${item._id}" title="Delete Todo"><i class="bi bi-trash"></i></button>
@@ -433,7 +433,6 @@ document.addEventListener('DOMContentLoaded', () => {
             renderChatHistory();
         }
         if (targetViewId === 'recommendation-view') {
-            const cachedRecommendation = sessionStorage.getItem('cachedRecommendation');
             if (cachedRecommendation) {
                 recommendationResult.innerHTML = cachedRecommendation;
             }
@@ -671,7 +670,7 @@ document.addEventListener('DOMContentLoaded', () => {
             todoModal.show(editBtn);
         }
         if (moveLink) {
-             e.preventDefault();
+            e.preventDefault();
             const todoId = moveLink.closest('.todo-item').dataset.todoId;
             const newTaskId = moveLink.dataset.taskId;
 
@@ -691,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 fetchAllData();
             }
         }
-         if (calendarButton) {
+        if (calendarButton) {
             if (confirm("Are you sure you want to add this to Google Calendar?")) {
                 const id = calendarButton.dataset.id;
                 calendarButton.disabled = true;
@@ -771,7 +770,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const activeTaskId = taskDetailIdInput.value;
             const isDetailViewOpen = taskDetailView.style.display === 'flex';
             if (isDetailViewOpen && activeTaskId) {
-                 taskSelect.value = activeTaskId;
+                taskSelect.value = activeTaskId;
             }
         }
     });
@@ -897,7 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     // Cek apakah list jadi kosong
                     if (taskCommentList.children.length === 0) {
-                         taskCommentList.innerHTML = '<div class="text-muted text-center p-3">No comments yet.</div>';
+                        taskCommentList.innerHTML = '<div class="text-muted text-center p-3">No comments yet.</div>';
                     }
                 } catch (err) {
                     showAlert(taskDetailAlert, err.message, 'danger');
@@ -947,7 +946,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 commentItem.classList.remove('is-editing');
                 showAlert(taskDetailAlert, 'Comment updated.', 'success');
             } catch (err) {
-                 showAlert(taskDetailAlert, err.message, 'danger');
+                showAlert(taskDetailAlert, err.message, 'danger');
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = 'Save';
@@ -955,10 +954,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
     // Submit form todo (Add/Edit)
     todoForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        const saveBtn = e.submitter;
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Saving...`;
+
         const id = todoForm.elements['todo-id'].value;
         const taskId = todoForm.elements['todo-task'].value;
         
@@ -995,20 +998,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     allTodos.unshift(newTodo);
                 }
             }
+
             todoModal.hide();
-            renderTasksAndTodos(); // Render ulang tampilan utama
-            
-            // PERUBAHAN: Refresh list todo di detail view jika terbuka
+            renderTasksAndTodos();
+
             const activeTaskId = taskDetailIdInput.value;
             const isDetailViewOpen = taskDetailView.style.display === 'flex';
             if (isDetailViewOpen && activeTaskId) {
-                // Cek apakah todo ini milik task yg sedang dilihat
                 if (payload.taskId === activeTaskId || originalTodo?.taskId === activeTaskId) {
-                     const todosForThisTask = allTodos.filter(t => t.taskId === activeTaskId);
+                    const todosForThisTask = allTodos.filter(t => t.taskId === activeTaskId);
                     renderTaskDetailTodos(todosForThisTask);
                 }
             }
-        } catch (err) { alert(err.message); }
+        } catch (err) {
+            alert(err.message);
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = 'Save';
+        }
     });
     
     // Profile & Subscription Listeners

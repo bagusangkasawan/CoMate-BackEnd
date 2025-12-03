@@ -13,7 +13,6 @@
 
     <!-- Halaman Login & Registrasi -->
     <div id="auth-container" class="container">
-        <!-- ... Konten autentikasi tidak berubah ... -->
         <div class="row justify-content-center align-items-center vh-100">
             <div class="col-lg-8 col-xl-7">
                 <div class="auth-card card">
@@ -59,7 +58,7 @@
                         </div>
                     </div>
                 </div>
-                 <div id="auth-alert" class="alert mt-3 d-none"></div>
+                <div id="auth-alert" class="alert mt-3 d-none"></div>
             </div>
         </div>
     </div>
@@ -118,7 +117,7 @@
 
             <!-- View: Chatbot -->
             <div id="chatbot-view" class="view">
-                 <div id="chat-container">
+                <div id="chat-container">
                     <div id="chat-box" class="p-3 mb-2">
                         <div id="typing-indicator" class="chat-message bot d-none">
                             <div class="typing-indicator"><span></span><span></span><span></span></div>
@@ -164,7 +163,7 @@
                         </div>
                     </div>
                     <div class="col-lg-5 mt-4 mt-lg-0">
-                         <div class="card">
+                        <div class="card">
                             <div class="card-body">
                                 <h5 class="card-title">Subscription Status</h5>
                                 <div id="subscription-status">
@@ -212,7 +211,7 @@
                             <!-- Komentar akan dirender oleh JS -->
                         </div>
                         <div class="premium-feature-overlay-wrapper">
-                             <div class="premium-feature-overlay d-none">
+                            <div class="premium-feature-overlay d-none">
                                 <i class="bi bi-gem"></i>
                                 <span>Adding Comments is Premium</span>
                                 <button type="button" class="btn btn-warning btn-sm go-to-profile-btn">Upgrade</button>
@@ -263,61 +262,61 @@
     
     <!-- Modal Todo -->
     <div class="modal fade" id="todoModal" tabindex="-1">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="todoModalLabel">Add Todo</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-          </div>
-          <div class="modal-body">
-            <form id="todo-form">
-              <input type="hidden" id="todo-id">
-              <div class="mb-3">
-                <label for="todo-title" class="form-label">Title <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="todo-title" required>
-              </div>
-              <div class="mb-3">
-                <label for="todo-task" class="form-label">Task (Group)</label>
-                <select class="form-select" id="todo-task">
-                    <!-- Task options will be populated by app.js -->
-                </select>
-              </div>
-              <div class="mb-3">
-                <label for="todo-description" class="form-label">Description <span class="text-muted">(Optional)</span></label>
-                <textarea class="form-control" id="todo-description" rows="2"></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="todo-status" class="form-label">Status <span class="text-danger">*</span></label>
-                <select class="form-select" id="todo-status" required>
-                  <option value="To Do" selected>To Do</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Done">Done</option>
-                </select>
-              </div>
-              <h6 class="mt-4 text-muted border-bottom pb-2">Google Calendar <span class="text-muted">(Optional)</span></h6>
-              <div class="row">
-                  <div class="col-md-6 mb-3">
-                    <label for="todo-startDate" class="form-label">Start Date</label>
-                    <input type="datetime-local" class="form-control" id="todo-startDate">
-                  </div>
-                   <div class="col-md-6 mb-3">
-                    <label for="todo-endDate" class="form-label">End Date</label>
-                    <input type="datetime-local" class="form-control" id="todo-endDate">
-                  </div>
-              </div>
-               <div class="mb-3">
-                <label for="todo-location" class="form-label">Location</label>
-                <input type="text" class="form-control" id="todo-location">
-              </div>
-              <div class="mb-3">
-                <label for="todo-attendee" class="form-label">Invite Attendee (Email) <span class="text-muted">(Optional)</span></label>
-                <input type="email" class="form-control" id="todo-attendee" placeholder="attendee@example.com">
-              </div>
-              <button type="submit" class="btn btn-primary w-100">Save</button>
-            </form>
-          </div>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="todoModalLabel">Add Todo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="todo-form">
+                        <input type="hidden" id="todo-id">
+                        <div class="mb-3">
+                            <label for="todo-title" class="form-label">Title <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="todo-title" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="todo-task" class="form-label">Task (Group)</label>
+                            <select class="form-select" id="todo-task">
+                                <!-- Task options will be populated by app.js -->
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="todo-description" class="form-label">Description <span class="text-muted">(Optional)</span></label>
+                            <textarea class="form-control" id="todo-description" rows="2"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="todo-status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="todo-status" required>
+                            <option value="To Do" selected>To Do</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Done">Done</option>
+                            </select>
+                        </div>
+                        <h6 class="mt-4 text-muted border-bottom pb-2">Google Calendar <span class="text-muted">(Optional)</span></h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="todo-startDate" class="form-label">Start Date</label>
+                                <input type="datetime-local" class="form-control" id="todo-startDate">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="todo-endDate" class="form-label">End Date</label>
+                                <input type="datetime-local" class="form-control" id="todo-endDate">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="todo-location" class="form-label">Location</label>
+                            <input type="text" class="form-control" id="todo-location">
+                        </div>
+                        <div class="mb-3">
+                            <label for="todo-attendee" class="form-label">Invite Attendee (Email) <span class="text-muted">(Optional)</span></label>
+                            <input type="email" class="form-control" id="todo-attendee" placeholder="attendee@example.com">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Save</button>
+                    </form>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
 
     <!-- HAPUS: Modal Task Detail telah dipindahkan menjadi view -->
